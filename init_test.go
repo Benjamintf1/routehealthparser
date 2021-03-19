@@ -13,7 +13,7 @@ var healthBinary string
 
 var _ = BeforeSuite(func() {
 	var err error
-	healthBinary, err = gexec.Build("github.com/cf-routing/Routehealthparser")
+	healthBinary, err = gexec.Build("github.com/cf-routing/routehealthparser")
 	Expect(err).NotTo(HaveOccurred())
 })
 

@@ -30,7 +30,7 @@ var _ = Describe("Results", func() {
 
 	Context("when downtime is reported", func() {
 		Context("when the success rate is > 99", func() {
-			It("displays the results from the server", func() {
+			It("displays the results from the server and succeeds", func() {
 				response = `{"totalrequests": 100, "responses": {"200": 99, "500": 1}}`
 				cmd := exec.Command(healthBinary, "-address", server.URL)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -45,7 +45,7 @@ var _ = Describe("Results", func() {
 		})
 
 		Context("when the success rate is < 99", func() {
-			It("displays the results from the server", func() {
+			It("displays the results from the server and fails", func() {
 				response = `{"totalrequests": 100, "responses": {"200": 98, "500": 2}}`
 				cmd := exec.Command(healthBinary, "-address", server.URL)
 				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
@@ -56,6 +56,35 @@ var _ = Describe("Results", func() {
 				Expect(session.Out).Should(gbytes.Say("Response:\n "))
 				Expect(session.Out).Should(gbytes.Say(response))
 				Expect(session.Err).Should(gbytes.Say(`Success rate \(0.980000\)`))
+			})
+		})
+		Context("when custom threshold is passed in success rates >= threshold", func() {
+			It("displays the results from the server and succeeds", func() {
+				response = `{"totalrequests": 100, "responses": {"200": 98, "500": 2}}`
+				cmd := exec.Command(healthBinary, "-address", server.URL, "-threshold", "98")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(0))
+
+				Expect(session.Out).Should(gbytes.Say("Response:\n "))
+				Expect(session.Out).Should(gbytes.Say(response))
+				Expect(session.Out).Should(gbytes.Say(`Success rate \(0.980000\)`))
+			})
+		})
+
+		Context("when custom threshold is passed in success rates < threshold", func() {
+			It("displays the results from the server and fails", func() {
+				response = `{"totalrequests": 100, "responses": {"200": 97, "500": 2}}`
+				cmd := exec.Command(healthBinary, "-address", server.URL, "-threshold", "98")
+				session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+
+				Expect(session.Out).Should(gbytes.Say("Response:\n "))
+				Expect(session.Out).Should(gbytes.Say(response))
+				Expect(session.Err).Should(gbytes.Say(`Success rate \(0.970000\)`))
 			})
 		})
 	})

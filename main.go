@@ -15,6 +15,7 @@ type Results struct {
 }
 
 var address = flag.String("address", "", "URL of Doctor route App")
+var threshold = flag.Int("threshold", 99, "min percentage of 200s")
 
 func main() {
 	flag.Parse()
@@ -51,11 +52,11 @@ func main() {
 	}
 
 	switch {
-	case rate < 0.99:
-		log.Fatalf("Success rate (%f) was < 99%%, please check results", rate)
+	case rate*100 < float32(*threshold):
+		log.Fatalf("Success rate (%f) was < %d%%, please check results", rate, *threshold)
 	case rate == 1.0:
 		fmt.Println("No downtime for this app!")
 	default:
-		fmt.Printf("Success rate (%f) was > 99%%, no error", rate)
+		fmt.Printf("Success rate (%f) was >= %d%%, no error", rate, *threshold)
 	}
 }
